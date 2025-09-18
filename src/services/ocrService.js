@@ -3,7 +3,7 @@ import { createWorker } from 'tesseract.js';
 // Helper function to check if OpenCV is loaded
 const isOpenCvReady = () => typeof cv !== 'undefined';
 
-const processImage = async (imageSrc, setProgress) => {
+const processImage = async (imageSrc, setProgress, debugCanvases) => {
   return new Promise(async (resolve, reject) => {
     if (!isOpenCvReady()) {
       console.error("OpenCV.js is not ready.");
@@ -16,22 +16,25 @@ const processImage = async (imageSrc, setProgress) => {
       // 1. Grayscale
       let gray = new cv.Mat();
       cv.cvtColor(img, gray, cv.COLOR_RGBA2GRAY, 0);
+      cv.imshow(debugCanvases.gray, gray);
       setProgress({ status: 'Preprocessing', progress: 20 });
 
       // 2. Noise Reduction (Gaussian Blur)
       let blurred = new cv.Mat();
       let ksize = new cv.Size(5, 5);
       cv.GaussianBlur(gray, blurred, ksize, 0, 0, cv.BORDER_DEFAULT);
+      cv.imshow(debugCanvases.blurred, blurred);
       setProgress({ status: 'Preprocessing', progress: 40 });
 
       // 3. Binarization (Otsu's Threshold)
       let binary = new cv.Mat();
       cv.threshold(blurred, binary, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
+      cv.imshow(debugCanvases.binary, binary);
       setProgress({ status: 'Preprocessing', progress: 60 });
 
-      // Create a canvas to pass to Tesseract
-      const canvas = document.createElement('canvas');
-      cv.imshow(canvas, binary);
+      // Create a canvas to pass to Tesseract (this one is not for display)
+      const tesseractCanvas = document.createElement('canvas');
+      cv.imshow(tesseractCanvas, binary);
       
       img.delete();
       gray.delete();
