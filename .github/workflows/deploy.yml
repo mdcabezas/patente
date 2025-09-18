@@ -15,7 +15,7 @@ on:
 
 # Configurar permisos necesarios para GitHub Pages
 permissions:
-  contents: read
+  contents: write  # Cambiado de 'read' a 'write' para poder hacer push
   pages: write
   id-token: write
 
@@ -103,6 +103,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        persist-credentials: true  # Mantener credenciales para push
         token: ${{ secrets.GITHUB_TOKEN }}
     
     # 2. Configurar Git
@@ -155,6 +156,15 @@ jobs:
           echo "No changes to commit"
         else
           git commit -m "Deploy: Update GitHub Pages content from ${{ github.sha }}"
-          git push origin gh-pages
-          echo "Successfully updated gh-pages branch"
+          
+          # Configurar la URL remota con token para autenticación
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          
+          # Push con manejo de errores
+          if git push origin gh-pages; then
+            echo "Successfully updated gh-pages branch"
+          else
+            echo "Failed to push to gh-pages branch"
+            exit 1
+          fi
         fi
