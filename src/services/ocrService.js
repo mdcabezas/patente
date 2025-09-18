@@ -52,7 +52,7 @@ const processImage = async (imageSrc, setProgress, debugCanvases) => {
       });
       await worker.setParameters({
         tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-        tessedit_pageseg_mode: 7, // PSM_SINGLE_LINE
+        tessedit_pageseg_mode: 13, // PSM_RAW_LINE
       });
       
       const { data: { text } } = await worker.recognize(canvas);
