@@ -37,8 +37,19 @@ const processImage = async (imageSrc, setProgress, debugCanvases) => {
     setProgress({ status: 'Initializing OCR', progress: 75 });
     const worker = await createWorker({
       logger: m => {
+        // console.log(m); // Uncomment for deep debugging
+        let status = m.status.charAt(0).toUpperCase() + m.status.slice(1);
+        let progress = m.progress * 100;
+
         if (m.status === 'recognizing text') {
-          setProgress({ status: 'Recognizing', progress: 75 + (m.progress * 25) });
+          status = 'Recognizing';
+          // The recognition progress is already 0-1, scale it to the 75-100 range
+          setProgress({ status: status, progress: 75 + (m.progress * 25) });
+        } else if (m.status.startsWith('loading') || m.status.startsWith('initializing')) {
+          // The loading/initializing progress is 0-1, scale it to the 0-75 range
+          setProgress({ status: status, progress: m.progress * 75 });
+        } else {
+          setProgress({ status: status, progress: 75 });
         }
       }
     });
