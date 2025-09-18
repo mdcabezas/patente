@@ -10,7 +10,8 @@ function App() {
   const authorizedPlates = useLicensePlates();
 
   const normalizeText = (text) => {
-    return text.replace(/[^A-Z0-9]/g, '').toUpperCase();
+    const cleanedText = text.replace(/[^A-Z0-9]/g, '').toUpperCase();
+    return cleanedText.replace('CHILE', '');
   };
 
   const handleScanComplete = (text, error = false) => {
