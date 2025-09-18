@@ -6,6 +6,7 @@ import { processImage } from '../services/ocrService';
 const CameraScanner = ({ onScanComplete }) => {
   const [isScanning, setIsScanning] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [capturedImage, setCapturedImage] = useState(null);
   const [progress, setProgress] = useState({ status: 'Idle', progress: 0 });
   const videoRef = useRef(null);
   const captureCanvasRef = useRef(null);
@@ -15,6 +16,7 @@ const CameraScanner = ({ onScanComplete }) => {
 
   const startScan = async () => {
     setIsScanning(true);
+    setCapturedImage(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       if (videoRef.current) {
@@ -33,7 +35,7 @@ const CameraScanner = ({ onScanComplete }) => {
     setIsScanning(false);
   };
 
-  const captureAndProcess = async () => {
+  const handleCaptureClick = () => {
     if (!videoRef.current) return;
 
     const video = videoRef.current;
@@ -44,24 +46,32 @@ const CameraScanner = ({ onScanComplete }) => {
     context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
 
     stopScan();
+    setCapturedImage(canvas);
     setIsProcessing(true);
     setProgress({ status: 'Initializing', progress: 0 });
-
-    try {
-      const debugCanvases = {
-        gray: grayCanvasRef.current,
-        blurred: blurredCanvasRef.current,
-        binary: binaryCanvasRef.current,
-      };
-      const text = await processImage(canvas, setProgress, debugCanvases);
-      onScanComplete(text);
-    } catch (error) {
-      console.error('Scan failed:', error);
-      onScanComplete('', true); // Signal an error to parent
-    } finally {
-      setIsProcessing(false);
-    }
   };
+
+  useEffect(() => {
+    const runProcessing = async () => {
+      if (isProcessing && capturedImage) {
+        try {
+          const debugCanvases = {
+            gray: grayCanvasRef.current,
+            blurred: blurredCanvasRef.current,
+            binary: binaryCanvasRef.current,
+          };
+          const text = await processImage(capturedImage, setProgress, debugCanvases);
+          onScanComplete(text);
+        } catch (error) {
+          console.error('Scan failed:', error);
+          onScanComplete('', true); // Signal an error to parent
+        } finally {
+          setIsProcessing(false);
+        }
+      }
+    };
+    runProcessing();
+  }, [isProcessing, capturedImage]);
 
   useEffect(() => {
     return () => stopScan(); // Cleanup on unmount
@@ -89,7 +99,7 @@ const CameraScanner = ({ onScanComplete }) => {
         <Button 
           variant="contained" 
           size="large" 
-          onClick={isScanning ? captureAndProcess : startScan}
+          onClick={isScanning ? handleCaptureClick : startScan}
           startIcon={<CameraAltIcon />}
         >
           {isScanning ? 'Capturar y Procesar' : 'Iniciar Escáner'}
@@ -97,19 +107,22 @@ const CameraScanner = ({ onScanComplete }) => {
       )}
 
       {/* --- DEBUG VIEW --- */}
-      {isProcessing && (
-        <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="caption">Grayscale</Typography>
-            <canvas ref={grayCanvasRef} style={{ width: 200, border: '1px solid black' }} />
-          </Box>
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="caption">Blurred</Typography>
-            <canvas ref={blurredCanvasRef} style={{ width: 200, border: '1px solid black' }} />
-          </Box>
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="caption">Binary (Final)</Typography>
-            <canvas ref={binaryCanvasRef} style={{ width: 200, border: '1px solid black' }} />
+      {(isProcessing || capturedImage) && (
+        <Box sx={{ mt: 4, p: 2, border: '1px dashed grey', borderRadius: 2, width: '100%' }}>
+          <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>Vista de Depuración</Typography>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="caption">1. Escala de Grises</Typography>
+              <canvas ref={grayCanvasRef} style={{ width: '100%', maxWidth: 300, border: '1px solid black' }} />
+            </Box>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="caption">2. Desenfoque</Typography>
+              <canvas ref={blurredCanvasRef} style={{ width: '100%', maxWidth: 300, border: '1px solid black' }} />
+            </Box>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="caption">3. Binario (Final)</Typography>
+              <canvas ref={binaryCanvasRef} style={{ width: '100%', maxWidth: 300, border: '1px solid black' }} />
+            </Box>
           </Box>
         </Box>
       )}
