@@ -16,12 +16,18 @@ const processImage = async (imageSrc, setProgress) => {
       // 1. Grayscale
       let gray = new cv.Mat();
       cv.cvtColor(img, gray, cv.COLOR_RGBA2GRAY, 0);
-      setProgress({ status: 'Preprocessing', progress: 25 });
+      setProgress({ status: 'Preprocessing', progress: 20 });
 
-      // 2. Binarization (Adaptive Threshold)
+      // 2. Noise Reduction (Gaussian Blur)
+      let blurred = new cv.Mat();
+      let ksize = new cv.Size(5, 5);
+      cv.GaussianBlur(gray, blurred, ksize, 0, 0, cv.BORDER_DEFAULT);
+      setProgress({ status: 'Preprocessing', progress: 40 });
+
+      // 3. Binarization (Otsu's Threshold)
       let binary = new cv.Mat();
-      cv.adaptiveThreshold(gray, binary, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 2);
-      setProgress({ status: 'Preprocessing', progress: 50 });
+      cv.threshold(blurred, binary, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
+      setProgress({ status: 'Preprocessing', progress: 60 });
 
       // Create a canvas to pass to Tesseract
       const canvas = document.createElement('canvas');
@@ -29,6 +35,7 @@ const processImage = async (imageSrc, setProgress) => {
       
       img.delete();
       gray.delete();
+      blurred.delete();
       binary.delete();
 
       setProgress({ status: 'Recognizing text', progress: 75 });
