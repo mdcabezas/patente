@@ -2,26 +2,62 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Escáner de Patente</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Tesseract.js v6 CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@6.0.1/dist/tesseract.min.js"></script>
+    <title>Scanner de Patentes</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Escáner de Patente</h1>
-
-    <div id="camera-wrapper">
-        <video id="video" autoplay playsinline></video>
-        <canvas id="fullCanvas" style="display:none;"></canvas>
-        <canvas id="cropCanvas"></canvas>
+    <div class="app-container">
+        <header>
+            <h1>Scanner de Patentes</h1>
+        </header>
+        
+        <main>
+            <div class="camera-container">
+                <video id="video" autoplay playsinline></video>
+                <canvas id="canvas" style="display: none;"></canvas>
+                
+                <!-- Overlay para mostrar el área de selección -->
+                <div id="selection-overlay" class="selection-overlay">
+                    <div class="selection-box"></div>
+                </div>
+                
+                <!-- Instrucciones -->
+                <div class="instructions">
+                    <p>Toca la pantalla para seleccionar el área de la patente</p>
+                </div>
+            </div>
+            
+            <!-- Botones de control -->
+            <div class="controls">
+                <button id="start-camera" class="btn btn-primary">Iniciar Cámara</button>
+                <button id="capture" class="btn btn-secondary" disabled>Capturar y Escanear</button>
+                <button id="toggle-camera" class="btn btn-secondary" disabled>Cambiar Cámara</button>
+            </div>
+            
+            <!-- Área de resultados -->
+            <div class="results">
+                <div id="loading" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Procesando imagen...</p>
+                </div>
+                
+                <div id="result-container" style="display: none;">
+                    <h3>Resultado del OCR:</h3>
+                    <p id="ocr-text" class="ocr-result"></p>
+                    
+                    <h3>Estado:</h3>
+                    <p id="match-status" class="match-status"></p>
+                </div>
+                
+                <!-- Imagen capturada para referencia -->
+                <canvas id="captured-image" style="display: none; max-width: 100%; margin-top: 10px;"></canvas>
+            </div>
+        </main>
     </div>
-
-    <button id="captureBtn">Capturar foto</button>
-    <button id="clearBtn">Limpiar</button>
-
-    <pre id="result">Resultado OCR: <span id="ocrText"></span></pre>
-
+    
+    <!-- Tesseract.js v6.0.1 desde CDN -->
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/6.0.1/tesseract.min.js'></script>
     <script src="app.js"></script>
 </body>
 </html>
